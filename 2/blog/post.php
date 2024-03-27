@@ -1,22 +1,17 @@
 <?php
+// post.php
+ 
+require('src/model.php');
+ 
+if (isset($_GET['id']) && $_GET['id'] > 0) {
+    $identifier = $_GET['id'];
+} else {
+    echo 'Erreur : aucun identifiant de billet envoyé';
+ 
+    die;
+}
 
-$post = [
-    'title' => 'un faux titre',
-    'frenchCreationDate' => '03/02/2024',
-    'content' => 'contenu fake'
-];
-
-$comments = [
-    [
-    'author' => 'Guillaume Debas',
-    'frenchCreationDate' => '03/02/2024',
-    'comment' => 'BG'
-],
-[
-     'author' => 'Anna J.',
-    'frenchCreationDate' => '03/02/2024',
-    'comment' => 'Lol'
-]
-];
+$post = getPost($identifier);
+$comments = getComments($identifier);
 
 require('templates/post.php');
