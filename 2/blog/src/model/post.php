@@ -2,60 +2,58 @@
 
 class Post
 {
-    public string $title;
-    public string $frenchCreationDate;
-    public string $content;
-    public string $identifier;
+	public string $title;
+	public string $frenchCreationDate;
+	public string $content;
+	public string $identifier;
 }
 
-function getPosts(): array
+class PostRepository
 {
-    // We connect to database
-    try {
-        $database = new PDO('mysql:host=localhost;dbname=oldblog;charset=utf8', 'root', '');
-    } catch (Exception $e) {
-        die('Erreur : ' . $e->getMessage());
-    }
+	public ?PDO $database = null;
 
-    // We retrieve the 5 last blog posts.
-    $statement = $database->query(
-        "SELECT id, title, content, DATE_FORMAT(creation_date, '%d/%m/%Y à %Hh%imin%ss') AS 
-   french_creation_date FROM posts ORDER BY creation_date DESC LIMIT 0, 5"
-    );
+	public function getPost(string $identifier): Post
+	{
+    	$this->dbConnect();
+    	$statement = $this->database->prepare(
+        	"SELECT id, title, content, DATE_FORMAT(creation_date, '%d/%m/%Y à %Hh%imin%ss') AS french_creation_date FROM posts WHERE id = ?"
+    	);
+    	$statement->execute([$identifier]);
 
-    $post = [];
-    while ($row = $statement->fetch()) {
-        $post = new Post();
-        $post->title = $row['title'];
-        $post->frenchCreationDate = $row['french_creation_date'];
-        $post->content = $row['content'];
-        $post->identifier = $row['id'];
+    	$row = $statement->fetch();
+    	$post = new Post();
+    	$post->title = $row['title'];
+    	$post->frenchCreationDate = $row['french_creation_date'];
+    	$post->content = $row['content'];
+    	$post->identifier = $row['id'];
 
-        $posts[] = $post;
-    }
-    return $posts;
-}
+    	return $post;
+	}
 
+	public function getPosts(): array
+	{
+    	$this->dbConnect();
+    	$statement = $this->database->query(
+        	"SELECT id, title, content, DATE_FORMAT(creation_date, '%d/%m/%Y à %Hh%imin%ss') AS french_creation_date FROM posts ORDER BY creation_date DESC LIMIT 0, 5"
+    	);
+    	$posts = [];
+    	while (($row = $statement->fetch())) {
+        	$post = new Post();
+        	$post->title = $row['title'];
+        	$post->frenchCreationDate = $row['french_creation_date'];
+        	$post->content = $row['content'];
+        	$post->identifier = $row['id'];
 
-function getPost($identifier): Post
-{
-    try {
-        $database = new PDO('mysql:host=localhost;dbname=oldblog;charset=utf8', 'root', '');
-    } catch (Exception $e) {
-        die('Erreur : ' . $e->getMessage());
-    }
+        	$posts[] = $post;
+    	}
 
-    $statement = $database->prepare(
-        "SELECT id, title, content, DATE_FORMAT(creation_date, '%d/%m/%Y à %Hh%imin%ss') AS french_creation_date FROM posts WHERE id = ?"
-    );
-    $statement->execute([$identifier]);
+    	return $posts;
+	}
 
-    $row = $statement->fetch();
-    $post = new Post();
-    $post->title = $row['title'];
-    $post->frenchCreationDate = $row['french_creation_date'];
-    $post->content = $row['content'];
-    $post->identifier = $row['id'];
-
-    return $post;
+	public function dbConnect()
+	{
+    	if ($this->database === null) {
+        	$this->database = new PDO('mysql:host=localhost;dbname=oldblog;charset=utf8', 'root', '');
+    	}
+	}
 }
